@@ -1,6 +1,3 @@
-let apiKey = "e2944bb8c8f7760687db8804f0796b78";
-
-// Formats the date for h2 display
 function formatDate(date) {
   let now = new Date();
   let days = [
@@ -18,29 +15,88 @@ function formatDate(date) {
   return `${day} ${hour}:${minutes}`;
 }
 
-// When clicking search, displays city name in h1 and date and time in h2
-function handleFormSubmit(event) {
-  event.preventDefault();
-  let city = document.querySelector("#city").value;
-  let displayTime = document.querySelector(".date-time");
-  let displayInput = document.querySelector("h1");
-  displayTime.innerHTML = formatDate(new Date());
-  displayInput.textContent = city;
+function displayForecast(response) {
+  let forecast = response.data.daily;
 
-  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+  let forecastElement = document.querySelector("#forecast");
 
-  // Fetch weather conditions for the city
-  axios.get(apiUrl).then(function (response) {
-    showTemperature(response, city);
+  let forecastHTML = `<div class="row">`;
+  forecast.forEach(function (forecastDay, index) {
+    if (index < 6) {
+      forecastHTML =
+        forecastHTML +
+        `
+      <div class="col-2">
+        <div class="weather-forecast-date">${formatDay(forecastDay.dt)}</div>
+        <img
+          src="http://openweathermap.org/img/wn/${
+            forecastDay.weather[0].icon
+          }@2x.png"
+          alt=""
+          width="42"
+        />
+        <div class="weather-forecast-temperatures">
+          <span class="weather-forecast-temperature-max"> ${Math.round(
+            forecastDay.temp.max
+          )}° </span>
+          <span class="weather-forecast-temperature-min"> ${Math.round(
+            forecastDay.temp.min
+          )}° </span>
+        </div>
+      </div>
+  `;
+    }
   });
+
+  forecastHTML = forecastHTML + `</div>`;
+  forecastElement.innerHTML = forecastHTML;
 }
 
-// Grabs temperature data and displays
-function showTemperature(response) {
-  let temperature = Math.round(response.data.main.temp);
-  let showTemp = document.querySelector(`#temperature`);
-  showTemp.innerHTML = `${temperature}`;
+function getForecast(coordinates) {
+  let apiKey = "e2944bb8c8f7760687db8804f0796b78";
+  let apiUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${apiKey}&units=metric`;
+  axios.get(apiUrl).then(displayForecast);
 }
 
-let form = document.querySelector("form");
-form.addEventListener("submit", handleFormSubmit);
+function displayTemperature(response) {
+  let temperatureElement = document.querySelector("#temperature");
+  let cityElement = document.querySelector("#city");
+  let descriptionElement = document.querySelector("#description");
+  let humidityElement = document.querySelector("#humidity");
+  let windElement = document.querySelector("#wind");
+  let dateElement = document.querySelector("#date");
+  let iconElement = document.querySelector("#icon");
+
+  let celsiusTemperature = response.data.main.temp;
+
+  temperatureElement.innerHTML = Math.round(celsiusTemperature);
+  cityElement.innerHTML = response.data.name;
+  descriptionElement.innerHTML = response.data.weather[0].description;
+  humidityElement.innerHTML = response.data.main.humidity;
+  windElement.innerHTML = Math.round(response.data.wind.speed * 3.6);
+  dateElement.innerHTML = formatDate(response.data.dt * 1000);
+  iconElement.setAttribute(
+    "src",
+    `http://openweathermap.org/img/wn/${response.data.weather[0].icon}@2x.png`
+  );
+  iconElement.setAttribute("alt", response.data.weather[0].description);
+
+  getForecast(response.data.coord);
+}
+
+function search(city) {
+  let apiKey = "e2944bb8c8f7760687db8804f0796b78";
+  let apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+  axios.get(apiUrl).then(displayTemperature);
+}
+
+function handleSubmit(event) {
+  event.preventDefault();
+  let cityInputElement = document.querySelector("#city-input");
+  search(cityInputElement.value);
+}
+
+let form = document.querySelector("#search-form");
+form.addEventListener("submit", handleSubmit);
+
+search("New York");
