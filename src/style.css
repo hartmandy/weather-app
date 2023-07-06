@@ -1,5 +1,5 @@
 body {
-  font-family: nunito;
+  font-family: Nunito;
 }
 
 h1 {
@@ -31,7 +31,6 @@ li:first-letter {
 }
 
 .weather-app-wrapper {
-  max-width: 500px;
   margin: 30px auto;
 }
 
